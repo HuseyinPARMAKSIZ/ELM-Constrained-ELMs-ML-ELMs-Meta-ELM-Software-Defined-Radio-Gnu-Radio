@@ -7,7 +7,7 @@
 # ML-ELMs for Classification Problems
     https://github.com/HuseyinPARMAKSIZ/ML-ELMs
 # Radio Frequency Fingerprinting Data Acquisition System Design
-
+    https://github.com/HuseyinPARMAKSIZ/GNU-Radio-Signal-capture-block-diagram
 It has been implemented in the open source DragonOS operating system installed on the RPi 4 device. HackRF One was used as software defined radio and GNU Radio was used as signal capture tool.
 # Feature Set Creation for Radio Frequency Fingerprinting Identification 
 Statistical methods were applied to EMD, instantaneous phase/frequency/amplitude values. (kurtosis, skewness, variance, standard deviation etc.)
