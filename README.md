@@ -5,4 +5,4 @@
 # Radio Frequency Fingerprinting Data Acquisition System Design
 # Feature Set Creation for Radio Frequency Fingerprinting Identification 
 # Feature Reduction/Selection with PCA/MRMR
-Feel free to discuss with and contact me!
+Feel free to discuss with and contact me! (All codes are in the testing phase)
