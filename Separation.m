@@ -1,3 +1,6 @@
+
+All codes are in the testing phase yet!!!
+It can be used after the test phase is completed with the permission of the author.
 %-- training and test data separation
 clear all
 load('Ready6Ftrvete.mat');
