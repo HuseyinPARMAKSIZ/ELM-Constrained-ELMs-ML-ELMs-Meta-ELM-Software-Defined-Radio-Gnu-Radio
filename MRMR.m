@@ -1,3 +1,7 @@
+
+All codes are in the testing phase yet!!!
+It can be used after the test phase is completed with the permission of the author.
+
 %% Rank features for classification using minimum redundancy maximum relevance (MRMR) algorithm %%
 clear all; close all; clc; warning off
 %------------------Loading datasets ----------------% 
