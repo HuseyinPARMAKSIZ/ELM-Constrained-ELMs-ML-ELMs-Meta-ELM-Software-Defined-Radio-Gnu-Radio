@@ -1,3 +1,7 @@
+
+All codes are in the testing phase yet!!!
+It can be used after the test phase is completed with the permission of the author.
+
 clear all
 RFdata9F = readtable('C:\Users\matlab\Desktop\h4ck3r-elm\F_38.csv');
 label9 = RFdata9F {:,1};
