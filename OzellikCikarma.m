@@ -1,6 +1,3 @@
-All codes are in the testing phase yet!!!
-It can be used after the test phase is completed with the permission of the author.
-
 clear all; close all; clc; warning off
 tic
 % Specify the folder where the files live.
@@ -22,8 +19,9 @@ for x=1:7
 pat='.'; dosya(x); N = split(dosya(x),pat);
 Label(x)=N(1);   
  
-seconds_to_read = 5;
-Fs = 20E6*2;          %1 megabit/s data rate for basic DPSK ?
+seconds_to_read = 1;
+Fs = 1E6*2;          %1 megabit/s data rate for basic DPSK ?
+%Fs = 20E6*2;          %1 megabit/s data rate for basic DPSK ?
 samples_to_read = floor(seconds_to_read * Fs);
 %filename1 = 'F:\Doktora_My_RF_Dataset\RFson\'+dosya(x);   %as appropriate
 filename1 = 'D:\RFson\'+dosya(x);   %as appropriate
@@ -90,8 +88,9 @@ for i=1:16
     hill=hilbert(abs(gol_up_d));
     inamp1=abs(hill);
     inp1=unwrap(angle(hill));
-    instf1=diff(unwrap(angle(hill)))/((1/Fs)*2*pi);
-    
+    %instf1=diff(unwrap(angle(hill)))/((1/Fs)*2*pi);
+    instf1 = Fs/(2*pi)*diff(unwrap(angle(hill)));
+       
    %instantaneous amplitude
     a_mn(i)=mean(inamp1);          a_var(i)=var(inamp1);
     a_skw(i)=skewness(inamp1);     a_krts(i)=kurtosis(inamp1);
