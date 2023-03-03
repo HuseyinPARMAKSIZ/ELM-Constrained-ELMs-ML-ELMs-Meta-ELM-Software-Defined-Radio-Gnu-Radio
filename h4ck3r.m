@@ -3,41 +3,57 @@ All codes are in the testing phase yet!!!
 It can be used after the test phase is completed with the permission of the author.
   
 %% Written by me last quarter of 2022 (for RF classification problems.)
+%% Written by Hüseyin PARMAKSIZ last quarter of 2022 (for classification problems.)
 clear all; close all; clc; warning off
 %------------------Loading datasets ----------------% 
 %-----Load Ready-RF dataset -----------------------------%
- load('Ready9Ftrvete.mat');
-% load('Ilk_RF_set.mat')
+%load('Ready9Ftrvete.mat');
 %-----Load Our RF dataset -------------------------------%
-% load('Our_RF_tr-te_43F.mat');
-%-----Load Our RF dataset after PCA ---------------------%
-%load('Our_RF_43_PCA_tr-te_26F.mat');
-%-----Load Our RF dataset after PCA and normalized-------%
-%load('Our_RF_43_PCANormalize1-13_tr-te_19F.mat');
-%load('Our_RF_data_21F_70e30.mat');
-% load('Our_RF_tr-te_X_37F_70e30.mat');
-Yd_train=train_data(:,1)'; X=train_data(:,2:size(train_data,2))';
-Yd_test=test_data(:,1)';   Xt=test_data(:,2:size(test_data,2))';
-%clear train_data;          clear test_data; %Release raw training & testing data array
+load('RFyuzde73-72F') % 72F 83-73
 %------------------Loading datasets ----------------% 
-%load('RF_3397R-274F-20C_70e30.mat');
-% Yd_train=train_data(:,1)'; X=train_data(:,2:9)'; X= zscore(X);
-% Yd_test=test_data(:,1)';   Xt=test_data(:,2:9)'; Xt= zscore(Xt); %size(test_data,2)
+
+%------------------Rearrange the rows of Train/Test Datasets ----------------%
+TeD=randperm(size(test_data,1)); test_data = test_data(TeD,:); 
+TrD=randperm(size(train_data,1)); train_data=train_data(TrD,:);
+%------------------Rearrange the rows of Train/Test Datasets ----------------%
+
+
+%% MRMR feature selection
+IlkKacOzellik=72;
+IMFOzellik=train_data(:,2:IlkKacOzellik); IMFClass= train_data(:,1);
+%% feature selection - MRMR (Minimum Redundancy Maximum Relevance) algorithm
+[index, etki] = fscmrmr(IMFOzellik,IMFClass); % Feature Selection Classification MRMR
+ONEtkileri = [index(1:size(IMFOzellik,2));etki]'; % Etki miktari ve oznitelik numarasi bir tabloda
+SiraliONEtkileri = sortrows(ONEtkileri,2,'descend');
+x=SiraliONEtkileri (:,1); vals = SiraliONEtkileri (:,2); 
+EtkiliSUTUNsiralamasi=x';
+SecIMFSay=size(find(vals'>=mean(vals)),2);
+%SecIMFSay=find(vals'>=0.35);
+SecIMF = EtkiliSUTUNsiralamasi(1:SecIMFSay)+1;
+%%------------------------------------------------------------------
+
+Yd_test=test_data(:,1)'; Xt=test_data(:,SecIMF)';   
+%Xt=zscore(Xt); %size(train_data,2)
+Yd_train=IMFClass';   X=train_data(:,SecIMF)'; 
+%X=zscore(X);
+mesh(X); figure,
+mesh(Xt);
 %-----Definitions--------%
 ite=1; Elm_Type = 1; REGRESSION=0; CLASSIFIER=1; 
 Fn=size(X,1); % attribute_number 9 (Label Mean GMean HMean Median MedianL MedianH MedianG Variance Stdev) 
 N=size(X,2); % the number of samples for train data N=2790 = 3985*0,7
 Nt=size(Xt,2); % the number of samples for test data Nt=1195 = 3985*0,3
 C=max(eig(X'*X)); % regularization factor for meta-elm 3.312241605718222e+06
+%C=10e15;
 time=[]; RMSEtrain=[]; RMSEtest=[]; % cost array in terms of RMSE
 Dogruluk_Meta_ELMtrain=[];Dogruluk_Meta_ELMtest=[]; Avg_Meta_ELMtrain=[];Avg_Meta_ELMtest=[];
 TrFcn = 'logsig';%transfer func of the node
-M=[500,600]; % Meta groups 
-Nnode=[2,8]; % sub-ELMs of each Meta
+M=[50]; % Meta groups 
+Nnode=[100 175]; % sub-ELMs of each Meta
 Msize=size(M,2); % size of deneme Meta groups
 Nnodesize=size(Nnode,2); % size of deneme Nnode
 BosNnode=[]; BosNnodeT=[];
-DenSay=3; % iteration size
+DenSay=5; % iteration size
 %----- Preprocessing the data of classification
 if Elm_Type~=REGRESSION
     sorted_target=sort(cat(2,Yd_train,Yd_test),2); % 1*3985 bütün sınıflar sıralı yan yana 
@@ -83,7 +99,9 @@ for aa=1:Msize % ELM size
     for bb=1:Nnodesize % Each ELM has node_size nodes/neuron
         NN=Nnode(bb);
         while ite<=DenSay %---LOOP for numerical experiments
-        tstart = tic;
+        %tstart = tic;
+        start_time_train=tic; 
+
         Xm=[]; Nm=[]; W=[]; b=[]; Beta=[]; HM=[]; HMtest=[]; H=[]; Hm=[]; %Accuracy_Meta_ELMtrain=[]; Accuracy_Meta_ELMtest=[];
         %---Stage:1 Loop for training of sub ELMs
             for m=1:MM
@@ -119,17 +137,10 @@ for aa=1:Msize % ELM size
                 HM=[HM Hm(:,:,j)]; %Her M çıkışını yan yana ekleme
             end
             %--- Training of MetaELM
-            BetaM=pinv(HM)*Yd_train; %implementation without regularization factor //refer to 2006 Neurocomputing paper
-            %BetaM=HM'*inv(eye(size(HM * HM'))/C + HM * HM')*Yd_train; % faster method 1 //refer to 2012 IEEE TSMC-B paper
-            %BetaM=((eye(size(HM * HM'))/C+HM * HM') \ HM)' * Yd_train; % faster method 2 //refer to 2012 IEEE TSMC-B paper
-            
-            %OutputWeight=pinv(H') * T';% implementation without regularization factor //refer to 2006 Neurocomputing paper
-            %OutputWeight=inv(eye(size(H,1))/C+H * H') * H * T'; % faster method 1 //refer to 2012 IEEE TSMC-B paper
-            %OutputWeight=(eye(size(H,1))/C+H * H') \ H * T'; % faster method 2 //refer to 2012 IEEE TSMC-B paper
-
-            
-            
-            time(ite)= toc(tstart);
+            %BetaM=HM'*inv(eye(size(HM*HM'))/C+HM*HM')*Yd_train;
+            BetaM=pinv(HM)*Yd_train;
+            TrainigTime=toc(start_time_train);
+            timeTr(ite)=TrainigTime;
         %--- PERFORMANCE FOR TRAINING DATA with founded output weight (Beta)parameters
             Ytrain=HM*BetaM;
             Y=Ytrain'; % 4*2790 sınıfa dahil olanlar pozitif diğerleri negatif
@@ -138,16 +149,20 @@ for aa=1:Msize % ELM size
             RMSEtrain(ite)=Cost_train;  
         %--- PERFORMANCE FOR TESTING DATA with founded rule parameter
             %--- H computation of MetaELM
+            start_time_test=tic;
             for k=1:MM
                 Htest(:,:,k)=feval(TrFcn,(Xt'*W(:,:,k)+repmat(b(:,:,k),Nt,1)))*Beta(:,:,k); % test * Class * M
                 HMtest=[HMtest Htest(:,:,k)];
             end
             Ytest=HMtest*BetaM;
             TY=Ytest'; % 4*1195 sınıfa dahil olanlar pozitif diğerleri negatif
+            TestingTime=toc(start_time_test);
+            timeTe(ite)=TestingTime;
             %--- Cost computatiton for training
             Cost_test=sqrt(mse(Ytest,Yd_test));%sqrt(sum((Yd_test-Ytest).^2)/Nt);
             RMSEtest(ite)=Cost_test; %Cost saving in an array
             %---  Calculate training & testing classification accuracy
+           
             if Elm_Type == CLASSIFIER
                 WrongGuessClass=0;
                 WrongGuessClassT=0;
@@ -174,9 +189,17 @@ for aa=1:Msize % ELM size
                 Accuracy_Meta_ELMtest(ite)=TestingAccuracy;
             end % Classifier_if
             ite=ite+1; %iteration increment
+        
+         
+       
         end % while ite
-        %Accuracy_Meta_ELMtrain
-        %Accuracy_Meta_ELMtest
+ 
+          %figure,
+          %plotconfusion(Y,Yd_train')
+          %figure,
+          %plotconfusion(TY,Yd_test')
+       %- Accuracy_Meta_ELMtrain
+        %- Accuracy_Meta_ELMtest
         ite=1;
         % disp('the elapsed time metrics for training');
         average_time=mean(time);    best_time=min(time);    worst_time=max(time);   std_dev_time=std(time);
@@ -190,11 +213,13 @@ for aa=1:Msize % ELM size
                 %EE=nonzeros(BosNnode); TT=nonzeros(BosNnodeT);
             end
          disp('---------------------------------------------------------------------------------------------------------');
-         disp('[  RegFac.    M       Nnode     TrAcc.       TeAcc.   ActivationFunc.  ]');
-         XX=[      C     MM       NN    BosNnode(aa,bb)  BosNnodeT(aa,bb)  string(TrFcn)];
+         disp('[  RegFac.    M       Nnode     TrAcc.       TeAcc.  TrTime.     TeTime.   ActivationFunc.  ]');
+         XX=[      C     MM       NN    BosNnode(aa,bb)  BosNnodeT(aa,bb) mean(timeTr) mean(timeTe) string(TrFcn)];
          disp(XX); 
     end
 end
+
+
 
 
 
